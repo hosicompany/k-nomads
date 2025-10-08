@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app:*)",
+      "Bash(npm run dev:*)",
+      "Bash(git init:*)",
+      "Bash(git commit:*)",
+      "Bash(git worktree:*)",
+      "Bash(git add:*)",
+      "Bash(dir)",
+      "Bash(cp:*)",
+      "Bash(npm install)",
+      "Bash(PORT=4004 npm run dev)",
+      "Bash(PORT=4003 npm run dev)",
+      "Bash(PORT=4002 npm run dev)",
+      "mcp__context7__get-library-docs",
+      "Bash(npm run lint)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run build:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
