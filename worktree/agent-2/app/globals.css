@@ -1,0 +1,107 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0a0a0a;
+  --foreground: #00ffff;
+  --neon-cyan: #00ffff;
+  --neon-magenta: #ff00ff;
+  --neon-green: #39ff14;
+  --dark-bg: #0a0a0a;
+  --darker-bg: #1a1a2e;
+  --glow-cyan: 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 30px #00ffff;
+  --glow-magenta: 0 0 10px #ff00ff, 0 0 20px #ff00ff, 0 0 30px #ff00ff;
+  --glow-green: 0 0 10px #39ff14, 0 0 20px #39ff14, 0 0 30px #39ff14;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-rajdhani);
+  --font-mono: var(--font-orbitron);
+
+  --color-neon-cyan: var(--neon-cyan);
+  --color-neon-magenta: var(--neon-magenta);
+  --color-neon-green: var(--neon-green);
+  --color-dark-bg: var(--dark-bg);
+  --color-darker-bg: var(--darker-bg);
+}
+
+body {
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+  background-attachment: fixed;
+  color: var(--foreground);
+  font-family: var(--font-rajdhani), Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6, .heading {
+  font-family: var(--font-orbitron), Arial, Helvetica, sans-serif;
+  font-weight: 700;
+}
+
+/* Neon Glow Animations */
+@keyframes neon-pulse {
+  0%, 100% {
+    text-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor;
+  }
+  50% {
+    text-shadow: 0 0 20px currentColor, 0 0 30px currentColor, 0 0 40px currentColor, 0 0 50px currentColor;
+  }
+}
+
+@keyframes neon-flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+    opacity: 1;
+    text-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor;
+  }
+  20%, 24%, 55% {
+    opacity: 0.7;
+    text-shadow: none;
+  }
+}
+
+@keyframes border-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px currentColor, 0 0 10px currentColor, inset 0 0 5px currentColor;
+  }
+  50% {
+    box-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor, inset 0 0 10px currentColor;
+  }
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.neon-text {
+  animation: neon-pulse 2s ease-in-out infinite;
+}
+
+.neon-border {
+  animation: border-glow 2s ease-in-out infinite;
+}
+
+.cyber-grid {
+  background-image:
+    linear-gradient(rgba(0, 255, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: grid-move 20s linear infinite;
+}
+
+@keyframes grid-move {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 50px 50px;
+  }
+}

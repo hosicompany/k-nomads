@@ -1,7 +1,10 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { cities } from '@/lib/data';
+import type { Metadata } from 'next';
+import { cities, reviews as initialReviews } from '@/lib/data';
 import RatingBar from '@/components/city/RatingBar';
+import CityDetailClient from '@/components/city/CityDetailClient';
+import CityReviewSection from '@/components/city/CityReviewSection';
 
 export async function generateStaticParams() {
   return cities.map((city) => ({
@@ -11,6 +14,29 @@ export async function generateStaticParams() {
 
 interface CityDetailPageProps {
   params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: CityDetailPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const city = cities.find((c) => c.slug === slug);
+
+  if (!city) {
+    return {
+      title: '도시를 찾을 수 없습니다',
+    };
+  }
+
+  return {
+    title: `${city.name} (${city.nameEn})`,
+    description: `${city.name}의 디지털 노마드 생활 정보. 평점 ${city.rating.toFixed(1)}/5.0, 생활비 ${city.costOfLiving.min}-${city.costOfLiving.max}만원/월, 인터넷 속도 ${city.internetSpeed}Mbps. ${city.activeNomads}명의 노마드가 현재 거주중입니다.`,
+    openGraph: {
+      title: `${city.name} - K-NOMADS`,
+      description: `${city.name}에서 디지털 노마드 생활을 시작하세요. 평점 ${city.rating.toFixed(1)}/5.0`,
+      images: ['/og-image.jpg'],
+    },
+  };
 }
 
 export default async function CityDetailPage({ params }: CityDetailPageProps) {
@@ -53,14 +79,7 @@ export default async function CityDetailPage({ params }: CityDetailPageProps) {
               <p className="text-xl text-gray-600">{city.nameEn}</p>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button className="rounded-full border-2 border-gray-300 bg-white px-6 py-3 font-semibold text-gray-700 transition-all hover:border-red-500 hover:text-red-500">
-                ❤️ 좋아요
-              </button>
-              <button className="rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-3 font-semibold text-white transition-all hover:shadow-lg">
-                리뷰 작성
-              </button>
-            </div>
+            <CityDetailClient slug={city.slug} cityName={city.name} />
           </div>
 
           <div className="mt-6 flex flex-wrap items-center gap-6">
@@ -123,20 +142,10 @@ export default async function CityDetailPage({ params }: CityDetailPageProps) {
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-2xl border-2 border-gray-200 bg-white shadow-sm">
-              <div className="border-b border-gray-200 bg-gradient-to-r from-blue-50 to-cyan-50 px-6 py-4">
-                <h2 className="text-2xl font-bold text-gray-900">💬 리뷰</h2>
-              </div>
-              <div className="p-6">
-                <div className="text-center text-gray-500">
-                  <p className="text-6xl">📝</p>
-                  <p className="mt-4">아직 작성된 리뷰가 없습니다.</p>
-                  <button className="mt-4 rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-2 text-sm font-semibold text-white transition-all hover:shadow-lg">
-                    첫 리뷰 작성하기
-                  </button>
-                </div>
-              </div>
-            </div>
+            <CityReviewSection
+              city={city}
+              initialReviews={initialReviews.filter((r) => r.cityId === city.id)}
+            />
           </div>
 
           <div className="space-y-6">

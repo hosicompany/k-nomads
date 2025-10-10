@@ -1,3 +1,5 @@
+import Button from '@/components/ui/Button';
+import ScrollReveal from '@/components/animations/ScrollReveal';
 import { events } from '@/lib/data';
 
 export default function Events() {
@@ -28,18 +30,20 @@ export default function Events() {
   };
 
   return (
-    <section className="py-16">
+    <section className="py-12 sm:py-16">
       <div className="container mx-auto px-4">
-        <div className="mb-8">
-          <h2 className="mb-2 text-3xl font-bold text-gray-900">
-            📅 이번주 밋업 & 이벤트
-          </h2>
-          <p className="text-gray-600">
-            노마드들과 함께하는 네트워킹 기회
-          </p>
-        </div>
+        <ScrollReveal>
+          <div className="mb-6 sm:mb-8">
+            <h2 className="mb-2 text-2xl font-bold text-gray-900 sm:text-3xl">
+              📅 이번주 밋업 & 이벤트
+            </h2>
+            <p className="text-sm text-gray-600 sm:text-base">
+              노마드들과 함께하는 네트워킹 기회
+            </p>
+          </div>
+        </ScrollReveal>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
           {events.map((event) => (
             <div
               key={event.id}
@@ -85,18 +89,18 @@ export default function Events() {
                   </div>
                 </div>
 
-                <button className="w-full rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 py-2 text-sm font-semibold text-white transition-all hover:shadow-lg">
+                <Button variant="primary" size="md" fullWidth>
                   참여하기
-                </button>
+                </Button>
               </div>
             </div>
           ))}
         </div>
 
-        <div className="mt-8 text-center">
-          <button className="rounded-full border-2 border-gray-300 bg-white px-6 py-3 font-semibold text-gray-700 transition-all hover:border-blue-600 hover:text-blue-600">
+        <div className="mt-6 text-center sm:mt-8">
+          <Button variant="secondary" size="md">
             모든 이벤트 보기
-          </button>
+          </Button>
         </div>
       </div>
     </section>
