@@ -144,7 +144,11 @@ Mock data in `lib/data.ts`:
 
 ### Performance & SEO
 
-- **Image Optimization**: AVIF/WebP formats, remote patterns configured
+- **Image Optimization**:
+  - AVIF/WebP formats enabled in `next.config.ts`
+  - Remote patterns configured to allow all HTTPS images
+  - Always use `next/image` with proper width/height attributes
+  - Configured formats: `['image/avif', 'image/webp']`
 - **Metadata**: Dynamic generateMetadata for all city and event pages
 - **Static Generation**: generateStaticParams for cities and events
 - **Sitemap**: Dynamic sitemap at `/sitemap.xml` with all routes
@@ -155,15 +159,64 @@ Mock data in `lib/data.ts`:
 
 - **App Router**: Uses Next.js 15 App Router (not Pages Router)
 - **Turbopack**: Enabled for dev and build (--turbopack flag)
-- **TypeScript**: Strict mode enabled, worktree folders excluded in tsconfig.json
+- **TypeScript**: Strict mode enabled, worktree folders excluded in tsconfig.json for git worktree support
 - **ESLint**: Extends next/core-web-vitals and next/typescript
-- **Suspense**: Search params usage wrapped in Suspense boundaries
+- **Suspense**: Components using `useSearchParams()` must be wrapped in Suspense boundaries
+- **Git Worktrees**: The project excludes `worktree/` folders in tsconfig.json to support git worktree workflows
 - **Server vs Client**:
   - City/Event detail pages are Server Components
   - Client components handle interactivity (favorites, filters, forms)
   - Pattern: Create `*Client.tsx` wrappers for server pages needing client features
 
 ## Important Patterns
+
+### Next.js 15 Async Params (CRITICAL)
+Next.js 15 requires `params` to be awaited in all dynamic routes:
+
+```typescript
+// ✅ CORRECT - params must be awaited
+export default async function CityDetailPage({ params }: PageProps) {
+  const { slug } = await params;  // Always await params in Next.js 15
+  const city = cities.find((c) => c.slug === slug);
+  // ...
+}
+
+// ❌ INCORRECT - will cause errors
+export default async function CityDetailPage({ params }: PageProps) {
+  const { slug } = params;  // Missing await - this will fail
+  // ...
+}
+```
+
+This applies to:
+- `generateMetadata()` functions
+- `generateStaticParams()` functions
+- All page components with dynamic routes
+
+### Suspense Boundaries for Search Params
+Components using `useSearchParams()` must be wrapped in Suspense:
+
+```typescript
+// app/cities/page.tsx (Server Component)
+import { Suspense } from 'react';
+
+export default function CitiesPage() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <CitiesClient />  {/* This component uses useSearchParams() */}
+    </Suspense>
+  );
+}
+
+// components/cities/CitiesClient.tsx (Client Component)
+'use client';
+import { useFilterParams } from '@/hooks/useFilterParams';
+
+export default function CitiesClient() {
+  const { filters } = useFilterParams();  // Uses useSearchParams internally
+  // ...
+}
+```
 
 ### Server/Client Component Separation
 ```typescript
@@ -219,8 +272,16 @@ Uses `@/*` for imports mapping to project root (configured in `tsconfig.json`)
 
 ## Styling Approach
 
-- Tailwind CSS v4 with custom PostCSS plugin (`@tailwindcss/postcss`)
-- Custom fonts: Geist Sans and Geist Mono from next/font
-- Primary language: Korean (lang="ko" in root layout)
-- Focus styles in globals.css for accessibility
-- Responsive breakpoints: sm (640px), md (768px), lg (1024px), xl (1280px)
+- **Tailwind CSS v4**:
+  - Uses `@tailwindcss/postcss` plugin (v4 syntax)
+  - Import statement in globals.css: `@import "tailwindcss";`
+  - Theme customization via `@theme inline` directive in globals.css
+  - CSS variables defined in `:root` for background/foreground colors
+- **Custom Fonts**: Geist Sans and Geist Mono from next/font with `display: swap`
+- **Language**: Primary language is Korean (lang="ko" in root layout)
+- **Accessibility Styles**:
+  - Focus styles: 2px blue outline on `*:focus-visible`
+  - High contrast mode: 3px outline with `@media (prefers-contrast: high)`
+  - `.sr-only` class for screen reader-only content
+- **Dark Mode**: Configured via `@media (prefers-color-scheme: dark)` in globals.css
+- **Responsive Breakpoints**: sm (640px), md (768px), lg (1024px), xl (1280px)
