@@ -29,7 +29,7 @@ export default async function CommunityPage() {
     profiles: { name: string; avatar_url: string | null } | null;
   };
 
-  const events: Event[] = (eventsData as any[] || []).map((event: EventWithRelations) => ({
+  const events: Event[] = ((eventsData || []) as unknown as EventWithRelations[]).map((event: EventWithRelations) => ({
     id: event.id,
     title: event.title,
     titleEn: event.title_en,

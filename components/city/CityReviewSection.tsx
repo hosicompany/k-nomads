@@ -47,7 +47,7 @@ export default function CityReviewSection({
           profiles: { name: string; avatar_url: string | null } | null;
         };
 
-        const transformedReviews: Review[] = (data as any[]).map((review: ReviewWithProfile) => ({
+        const transformedReviews: Review[] = (data as unknown as ReviewWithProfile[]).map((review: ReviewWithProfile) => ({
           id: review.id,
           cityId: review.city_id,
           userId: review.user_id,

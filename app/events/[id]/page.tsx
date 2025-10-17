@@ -72,6 +72,13 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
   }
 
   // Transform Supabase data to Event interface
+  type EventWithRelations = typeof eventData & {
+    cities: { name: string; slug: string } | null;
+    profiles: { name: string; avatar_url: string | null } | null;
+  };
+
+  const typedEventData = eventData as EventWithRelations;
+
   const event: Event = {
     id: eventData.id,
     title: eventData.title,
@@ -89,8 +96,8 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
     registered: eventData.registered || 0,
     organizer: {
       id: eventData.organizer_id || '',
-      name: (eventData as any).profiles?.name || '익명',
-      avatar: (eventData as any).profiles?.avatar_url || '/avatars/default.jpg',
+      name: typedEventData.profiles?.name || '익명',
+      avatar: typedEventData.profiles?.avatar_url || '/avatars/default.jpg',
     },
     image: eventData.image_url || '',
   };
