@@ -24,14 +24,14 @@ export default async function HotCities() {
     rating: Number(city.rating) || 0,
     lovePercentage: city.love_percentage || 0,
     activeNomads: city.active_nomads || 0,
-    ratings: city.ratings || { cafe: 0, housing: 0, transportation: 0, food: 0, nature: 0 },
+    ratings: (city.ratings as { cafe: number; housing: number; transportation: number; food: number; nature: number } | null) || { cafe: 0, housing: 0, transportation: 0, food: 0, nature: 0 },
     costOfLiving: {
       min: city.cost_min || 0,
       max: city.cost_max || 0,
     },
     internetSpeed: city.internet_speed || 0,
     cafes24h: city.cafes_24h || 0,
-    weather: city.weather || { temp: 0, condition: '' },
+    weather: (city.weather as { temp: number; condition: string } | null) || { temp: 0, condition: '' },
   })).map((city, index) => ({ ...city, rank: index + 1 }));
 
   return (

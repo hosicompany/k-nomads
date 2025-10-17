@@ -13,7 +13,7 @@ export default function EventCard({ event }: EventCardProps) {
     weekday: 'short',
   });
 
-  const spotsLeft = event.maxParticipants - event.participants;
+  const spotsLeft = event.capacity - event.registered;
   const isFull = spotsLeft <= 0;
 
   return (
@@ -56,7 +56,7 @@ export default function EventCard({ event }: EventCardProps) {
         <div className="space-y-2 text-sm text-gray-700">
           <div className="flex items-center gap-2">
             <span>📍</span>
-            <span>{event.cityName}</span>
+            <span>{event.city}</span>
           </div>
           <div className="flex items-center gap-2">
             <span>📅</span>
@@ -65,7 +65,7 @@ export default function EventCard({ event }: EventCardProps) {
           <div className="flex items-center gap-2">
             <span>👥</span>
             <span>
-              {event.participants}/{event.maxParticipants}명
+              {event.registered}/{event.capacity}명
               {!isFull && (
                 <span className="ml-1 text-green-600">
                   ({spotsLeft}자리 남음)

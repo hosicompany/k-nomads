@@ -74,14 +74,14 @@ export default async function CityDetailPage({ params }: CityDetailPageProps) {
     rating: Number(cityData.rating) || 0,
     lovePercentage: cityData.love_percentage || 0,
     activeNomads: cityData.active_nomads || 0,
-    ratings: cityData.ratings || { cafe: 0, housing: 0, transportation: 0, food: 0, nature: 0 },
+    ratings: (cityData.ratings as { cafe: number; housing: number; transportation: number; food: number; nature: number } | null) || { cafe: 0, housing: 0, transportation: 0, food: 0, nature: 0 },
     costOfLiving: {
       min: cityData.cost_min || 0,
       max: cityData.cost_max || 0,
     },
     internetSpeed: cityData.internet_speed || 0,
     cafes24h: cityData.cafes_24h || 0,
-    weather: cityData.weather || { temp: 0, condition: '' },
+    weather: (cityData.weather as { temp: number; condition: string } | null) || { temp: 0, condition: '' },
   };
 
   return (

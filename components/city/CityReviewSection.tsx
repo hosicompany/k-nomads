@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { City, Review } from '@/types';
+import { Tables } from '@/types/database.types';
 import ReviewList from '@/components/reviews/ReviewList';
 import ReviewForm from '@/components/reviews/ReviewForm';
 import { createClient } from '@/lib/supabase/client';
@@ -42,7 +43,11 @@ export default function CityReviewSection({
         setReviews(initialReviews);
       } else if (data) {
         // Transform Supabase data to Review interface
-        const transformedReviews: Review[] = data.map((review: any) => ({
+        type ReviewWithProfile = Tables<'reviews'> & {
+          profiles: { name: string; avatar_url: string | null } | null;
+        };
+
+        const transformedReviews: Review[] = (data as any[]).map((review: ReviewWithProfile) => ({
           id: review.id,
           cityId: review.city_id,
           userId: review.user_id,
@@ -53,7 +58,7 @@ export default function CityReviewSection({
           stayDuration: review.stay_duration || '',
           content: review.content,
           images: review.images || [],
-          createdAt: new Date(review.created_at),
+          createdAt: new Date(review.created_at || Date.now()),
           helpful: review.helpful_count || 0,
           helpfulBy: [], // Will be populated from review_helpful table if needed
         }));

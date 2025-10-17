@@ -125,7 +125,7 @@ export function searchEvents(events: Event[], searchTerm: string): Event[] {
     (event) =>
       event.title.toLowerCase().includes(lowerSearch) ||
       event.description.toLowerCase().includes(lowerSearch) ||
-      event.cityName.toLowerCase().includes(lowerSearch)
+      event.city.toLowerCase().includes(lowerSearch)
   );
 }
 
@@ -137,10 +137,10 @@ export function filterByEventType(events: Event[], types: string[]): Event[] {
 }
 
 // 도시별 이벤트 필터
-export function filterByCity(events: Event[], cityIds: string[]): Event[] {
-  if (cityIds.length === 0) return events;
+export function filterByCity(events: Event[], citySlugs: string[]): Event[] {
+  if (citySlugs.length === 0) return events;
 
-  return events.filter((event) => cityIds.includes(event.cityId));
+  return events.filter((event) => citySlugs.includes(event.citySlug));
 }
 
 // 날짜별 이벤트 필터

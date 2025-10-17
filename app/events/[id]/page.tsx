@@ -81,7 +81,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
     type: eventData.type as 'meetup' | 'workshop' | 'networking',
     city: eventData.cities?.name || '',
     citySlug: eventData.cities?.slug || '',
-    location: eventData.location || { name: '', address: '' },
+    location: (eventData.location as { name: string; address: string } | null) || { name: '', address: '' },
     date: new Date(eventData.date),
     startTime: eventData.start_time,
     endTime: eventData.end_time,
@@ -89,8 +89,8 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
     registered: eventData.registered || 0,
     organizer: {
       id: eventData.organizer_id || '',
-      name: eventData.profiles?.name || '익명',
-      avatar: eventData.profiles?.avatar_url || '/avatars/default.jpg',
+      name: (eventData as any).profiles?.name || '익명',
+      avatar: (eventData as any).profiles?.avatar_url || '/avatars/default.jpg',
     },
     image: eventData.image_url || '',
   };

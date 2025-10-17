@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { Event } from '@/types';
+import { Tables } from '@/types/database.types';
 import CommunityContent from '@/components/community/CommunityContent';
 
 export default async function CommunityPage() {
@@ -23,7 +24,12 @@ export default async function CommunityPage() {
     .order('date', { ascending: true });
 
   // Transform Supabase data to Event interface
-  const events: Event[] = (eventsData || []).map((event: any) => ({
+  type EventWithRelations = Tables<'events'> & {
+    cities: { name: string; slug: string } | null;
+    profiles: { name: string; avatar_url: string | null } | null;
+  };
+
+  const events: Event[] = (eventsData as any[] || []).map((event: EventWithRelations) => ({
     id: event.id,
     title: event.title,
     titleEn: event.title_en,
@@ -32,7 +38,7 @@ export default async function CommunityPage() {
     type: event.type as 'meetup' | 'workshop' | 'networking',
     city: event.cities?.name || '',
     citySlug: event.cities?.slug || '',
-    location: event.location || { name: '', address: '' },
+    location: (event.location as { name: string; address: string } | null) || { name: '', address: '' },
     date: new Date(event.date),
     startTime: event.start_time,
     endTime: event.end_time,

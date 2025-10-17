@@ -10,8 +10,8 @@ interface Profile {
   avatar_url: string | null;
   bio: string | null;
   current_city: string | null;
-  created_at: string;
-  updated_at: string;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 export interface UserWithProfile {

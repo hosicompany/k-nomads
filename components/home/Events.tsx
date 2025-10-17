@@ -62,7 +62,7 @@ export default function Events() {
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <span>📍</span>
-                  <span>{event.cityName}</span>
+                  <span>{event.city}</span>
                 </div>
               </div>
 
@@ -76,14 +76,14 @@ export default function Events() {
                   <div className="mb-2 flex items-center justify-between text-sm">
                     <span className="text-gray-600">참가자</span>
                     <span className="font-semibold text-gray-900">
-                      {event.participants}/{event.maxParticipants}명
+                      {event.registered}/{event.capacity}명
                     </span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-gray-100">
                     <div
                       className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 transition-all"
                       style={{
-                        width: `${(event.participants / event.maxParticipants) * 100}%`,
+                        width: `${(event.registered / event.capacity) * 100}%`,
                       }}
                     ></div>
                   </div>

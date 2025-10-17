@@ -46,17 +46,27 @@ export interface Review {
 export interface Event {
   id: string;
   title: string;
+  titleEn: string;
   description: string;
-  cityId: string;
-  cityName: string;
-  date: Date;
-  location: string;
-  participants: number;
-  maxParticipants: number;
+  descriptionEn: string;
   type: 'meetup' | 'workshop' | 'networking';
-  organizer: string;
-  organizerId: string;
-  imageUrl?: string;
+  city: string;
+  citySlug: string;
+  location: {
+    name: string;
+    address: string;
+  };
+  date: Date;
+  startTime: string;
+  endTime: string;
+  capacity: number;
+  registered: number;
+  organizer: {
+    id: string;
+    name: string;
+    avatar: string;
+  };
+  image: string;
 }
 
 export interface User {
