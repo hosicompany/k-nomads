@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { City, Review } from '@/types';
 import ReviewList from '@/components/reviews/ReviewList';
 import ReviewForm from '@/components/reviews/ReviewForm';
-import { useReviewStore } from '@/store/useReviewStore';
+import { createClient } from '@/lib/supabase/client';
 
 export interface CityReviewSectionProps {
   city: City;
@@ -16,32 +16,75 @@ export default function CityReviewSection({
   initialReviews,
 }: CityReviewSectionProps) {
   const [showReviewForm, setShowReviewForm] = useState(false);
-  const { reviews, getReviewsByCity } = useReviewStore();
+  const [reviews, setReviews] = useState<Review[]>(initialReviews);
+  const [isLoading, setIsLoading] = useState(true);
+  const supabase = createClient();
 
-  // 초기 리뷰를 스토어에 로드
+  // Fetch reviews from Supabase
   useEffect(() => {
-    // 스토어가 비어있고 초기 리뷰가 있으면 로드
-    if (reviews.length === 0 && initialReviews.length > 0) {
-      initialReviews.forEach((review) => {
-        // 이미 스토어에 없는 리뷰만 추가
-        if (!reviews.find((r) => r.id === review.id)) {
-          useReviewStore.getState().addReview(review);
-        }
-      });
-    }
-  }, [initialReviews, reviews]);
+    const fetchReviews = async () => {
+      setIsLoading(true);
 
-  // 현재 도시의 리뷰 가져오기 (스토어 + 초기 데이터)
-  const cityReviews = getReviewsByCity(city.id);
-  const allReviews =
-    cityReviews.length > 0
-      ? cityReviews
-      : initialReviews;
+      const { data, error } = await supabase
+        .from('reviews')
+        .select(`
+          *,
+          profiles:user_id (
+            name,
+            avatar_url
+          )
+        `)
+        .eq('city_id', city.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching reviews:', error);
+        setReviews(initialReviews);
+      } else if (data) {
+        // Transform Supabase data to Review interface
+        const transformedReviews: Review[] = data.map((review: any) => ({
+          id: review.id,
+          cityId: review.city_id,
+          userId: review.user_id,
+          userName: review.profiles?.name || '익명',
+          userAvatar: review.profiles?.avatar_url || '/avatars/default.jpg',
+          rating: review.rating,
+          title: review.title,
+          stayDuration: review.stay_duration || '',
+          content: review.content,
+          images: review.images || [],
+          createdAt: new Date(review.created_at),
+          helpful: review.helpful_count || 0,
+          helpfulBy: [], // Will be populated from review_helpful table if needed
+        }));
+
+        setReviews(transformedReviews);
+      }
+
+      setIsLoading(false);
+    };
+
+    fetchReviews();
+  }, [city.id, supabase, initialReviews]);
+
+  if (isLoading) {
+    return (
+      <div className="overflow-hidden rounded-2xl border-2 border-gray-200 bg-white shadow-sm">
+        <div className="border-b border-gray-200 bg-gradient-to-r from-blue-50 to-cyan-50 px-6 py-4">
+          <h2 className="text-2xl font-bold text-gray-900">💬 리뷰</h2>
+        </div>
+        <div className="p-12 text-center">
+          <div className="mb-4 text-4xl">⏳</div>
+          <p className="text-gray-600">리뷰를 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
       <ReviewList
-        reviews={allReviews}
+        reviews={reviews}
         onWriteReview={() => setShowReviewForm(true)}
       />
 

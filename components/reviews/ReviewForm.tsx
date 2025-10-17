@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { City, Review } from '@/types';
+import { City } from '@/types';
 import Button from '@/components/ui/Button';
 import StarRating from './StarRating';
-import { useReviewStore } from '@/store/useReviewStore';
+import { useUser } from '@/hooks/useUser';
+import { createClient } from '@/lib/supabase/client';
 
 export interface ReviewFormProps {
   city: City;
@@ -40,8 +41,10 @@ export default function ReviewForm({ city, onClose }: ReviewFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const { addReview } = useReviewStore();
+  const { user } = useUser();
+  const supabase = createClient();
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -77,39 +80,46 @@ export default function ReviewForm({ city, onClose }: ReviewFormProps) {
       return;
     }
 
+    // Check if user is logged in
+    if (!user) {
+      setSubmitError('리뷰를 작성하려면 로그인이 필요합니다.');
+      return;
+    }
+
     setIsSubmitting(true);
+    setSubmitError(null);
 
-    // 가짜 API 호출 시뮬레이션
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      // Insert review to Supabase
+      const { error } = await supabase.from('reviews').insert({
+        city_id: city.id,
+        user_id: user.id,
+        rating: formData.rating,
+        title: formData.title,
+        stay_duration: formData.stayDuration,
+        content: formData.content,
+        images: imagePreviews, // Will be replaced with Storage URLs in Phase 5
+      });
 
-    // 새 리뷰 생성
-    const newReview: Review = {
-      id: `review-${Date.now()}`,
-      cityId: city.id,
-      userId: 'current-user',
-      userName: '익명의 노마드',
-      userAvatar: '/avatars/default.jpg',
-      rating: formData.rating,
-      title: formData.title,
-      stayDuration: formData.stayDuration,
-      content: formData.content,
-      images: imagePreviews,
-      createdAt: new Date(),
-      helpful: 0,
-      helpfulBy: [],
-    };
+      if (error) {
+        console.error('Error creating review:', error);
+        setSubmitError('리뷰 작성 중 오류가 발생했습니다. 다시 시도해주세요.');
+        setIsSubmitting(false);
+        return;
+      }
 
-    addReview(newReview);
+      setIsSuccess(true);
 
-    console.log('New Review:', newReview);
-
-    setIsSubmitting(false);
-    setIsSuccess(true);
-
-    // 2초 후 모달 닫기
-    setTimeout(() => {
-      onClose();
-    }, 2000);
+      // 2초 후 모달 닫기 및 페이지 새로고침
+      setTimeout(() => {
+        onClose();
+        window.location.reload(); // Reload to fetch new reviews
+      }, 2000);
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      setSubmitError('예상치 못한 오류가 발생했습니다.');
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (
@@ -212,6 +222,20 @@ export default function ReviewForm({ city, onClose }: ReviewFormProps) {
               </div>
 
               <form onSubmit={handleSubmit} className="p-6">
+                {/* Error message */}
+                {submitError && (
+                  <div className="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
+                    {submitError}
+                  </div>
+                )}
+
+                {/* Login prompt for non-authenticated users */}
+                {!user && (
+                  <div className="mb-4 rounded-lg bg-yellow-50 border border-yellow-200 px-4 py-3 text-sm text-yellow-700">
+                    리뷰를 작성하려면 <a href="/login" className="font-semibold underline">로그인</a>이 필요합니다.
+                  </div>
+                )}
+
                 <div className="space-y-6">
                   {/* 별점 */}
                   <div>

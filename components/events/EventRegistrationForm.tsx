@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Event } from '@/types';
 import Button from '@/components/ui/Button';
+import { useUser } from '@/hooks/useUser';
+import { createClient } from '@/lib/supabase/client';
 
 export interface EventRegistrationFormProps {
   event: Event;
@@ -27,6 +29,9 @@ export default function EventRegistrationForm({
   event,
   onClose,
 }: EventRegistrationFormProps) {
+  const { user } = useUser();
+  const supabase = createClient();
+
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
@@ -37,6 +42,7 @@ export default function EventRegistrationForm({
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -68,24 +74,47 @@ export default function EventRegistrationForm({
       return;
     }
 
+    // Check if user is logged in
+    if (!user) {
+      setSubmitError('이벤트 참가 신청은 로그인이 필요합니다.');
+      return;
+    }
+
     setIsSubmitting(true);
+    setSubmitError(null);
 
-    // 가짜 API 호출 시뮬레이션
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      // Insert event registration to Supabase
+      const { error } = await supabase.from('event_registrations').insert({
+        event_id: event.id,
+        user_id: user.id,
+      });
 
-    console.log('Event Registration:', {
-      eventId: event.id,
-      eventTitle: event.title,
-      ...formData,
-    });
+      if (error) {
+        console.error('Error registering for event:', error);
 
-    setIsSubmitting(false);
-    setIsSuccess(true);
+        // Check if already registered
+        if (error.code === '23505') {
+          setSubmitError('이미 이 이벤트에 신청하셨습니다.');
+        } else {
+          setSubmitError('이벤트 신청 중 오류가 발생했습니다. 다시 시도해주세요.');
+        }
+        setIsSubmitting(false);
+        return;
+      }
 
-    // 2초 후 모달 닫기
-    setTimeout(() => {
-      onClose();
-    }, 2000);
+      setIsSuccess(true);
+
+      // 2초 후 모달 닫기 및 페이지 새로고침
+      setTimeout(() => {
+        onClose();
+        window.location.reload(); // Reload to update registered count
+      }, 2000);
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      setSubmitError('예상치 못한 오류가 발생했습니다.');
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (
@@ -157,6 +186,20 @@ export default function EventRegistrationForm({
               </div>
 
               <form onSubmit={handleSubmit} className="p-6">
+                {/* Error message */}
+                {submitError && (
+                  <div className="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
+                    {submitError}
+                  </div>
+                )}
+
+                {/* Login prompt for non-authenticated users */}
+                {!user && (
+                  <div className="mb-4 rounded-lg bg-yellow-50 border border-yellow-200 px-4 py-3 text-sm text-yellow-700">
+                    이벤트 참가 신청은 <a href="/login" className="font-semibold underline">로그인</a>이 필요합니다.
+                  </div>
+                )}
+
                 <div className="space-y-4">
                   <div>
                     <label

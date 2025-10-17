@@ -1,9 +1,39 @@
 import CityCard from '@/components/city/CityCard';
 import Button from '@/components/ui/Button';
 import ScrollReveal from '@/components/animations/ScrollReveal';
-import { cities } from '@/lib/data';
+import { createClient } from '@/lib/supabase/server';
+import { City } from '@/types';
 
-export default function HotCities() {
+export default async function HotCities() {
+  const supabase = await createClient();
+
+  // Fetch cities from Supabase, ordered by rating
+  const { data: cities } = await supabase
+    .from('cities')
+    .select('*')
+    .order('rating', { ascending: false });
+
+  // Transform Supabase data to match City interface
+  const transformedCities: City[] = (cities || []).map((city) => ({
+    id: city.id,
+    rank: 0, // Will be calculated based on order
+    name: city.name,
+    nameEn: city.name_en,
+    slug: city.slug,
+    image: city.image_url || '',
+    rating: Number(city.rating) || 0,
+    lovePercentage: city.love_percentage || 0,
+    activeNomads: city.active_nomads || 0,
+    ratings: city.ratings || { cafe: 0, housing: 0, transportation: 0, food: 0, nature: 0 },
+    costOfLiving: {
+      min: city.cost_min || 0,
+      max: city.cost_max || 0,
+    },
+    internetSpeed: city.internet_speed || 0,
+    cafes24h: city.cafes_24h || 0,
+    weather: city.weather || { temp: 0, condition: '' },
+  })).map((city, index) => ({ ...city, rank: index + 1 }));
+
   return (
     <section className="py-12 sm:py-16">
       <div className="container mx-auto px-4">
@@ -26,7 +56,7 @@ export default function HotCities() {
         </ScrollReveal>
 
         <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          {cities.map((city) => (
+          {transformedCities.map((city) => (
             <CityCard key={city.id} city={city} />
           ))}
         </div>

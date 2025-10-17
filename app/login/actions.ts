@@ -27,12 +27,19 @@ export async function login(formData: FormData) {
 export async function signup(formData: FormData) {
   const supabase = await createClient();
 
-  const data = {
-    email: formData.get('email') as string,
-    password: formData.get('password') as string,
-  };
+  const email = formData.get('email') as string;
+  const password = formData.get('password') as string;
+  const name = formData.get('name') as string;
 
-  const { error } = await supabase.auth.signUp(data);
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        name: name || email.split('@')[0], // Use email prefix as fallback
+      },
+    },
+  });
 
   if (error) {
     redirect('/register?error=Could not create user');
@@ -40,4 +47,16 @@ export async function signup(formData: FormData) {
 
   revalidatePath('/', 'layout');
   redirect('/login?message=Check your email to confirm your account');
+}
+
+export async function logout() {
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    redirect('/?error=Could not sign out');
+  }
+
+  revalidatePath('/', 'layout');
+  redirect('/');
 }

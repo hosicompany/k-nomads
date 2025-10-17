@@ -35,6 +35,21 @@ export default async function RegisterPage({
 
           {/* Form */}
           <form className="space-y-6">
+            {/* Name Input */}
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                이름
+              </label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-400 transition-colors focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20"
+                placeholder="홍길동"
+                required
+              />
+            </div>
+
             {/* Email Input */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">

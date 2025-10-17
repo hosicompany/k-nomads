@@ -1,11 +1,15 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { events } from '@/lib/data';
+import { createClient } from '@/lib/supabase/server';
+import { Event } from '@/types';
 import EventDetailClient from '@/components/events/EventDetailClient';
 
 export async function generateStaticParams() {
-  return events.map((event) => ({
+  const supabase = await createClient();
+  const { data: events } = await supabase.from('events').select('id');
+
+  return (events || []).map((event) => ({
     id: event.id,
   }));
 }
@@ -18,7 +22,13 @@ export async function generateMetadata({
   params,
 }: EventDetailPageProps): Promise<Metadata> {
   const { id } = await params;
-  const event = events.find((e) => e.id === id);
+  const supabase = await createClient();
+
+  const { data: event } = await supabase
+    .from('events')
+    .select('*')
+    .eq('id', id)
+    .single();
 
   if (!event) {
     return {
@@ -32,20 +42,60 @@ export async function generateMetadata({
     openGraph: {
       title: `${event.title} - K-NOMADS`,
       description: event.description,
-      images: [event.imageUrl || '/og-image.jpg'],
+      images: [event.image_url || '/og-image.jpg'],
     },
   };
 }
 
 export default async function EventDetailPage({ params }: EventDetailPageProps) {
   const { id } = await params;
-  const event = events.find((e) => e.id === id);
+  const supabase = await createClient();
 
-  if (!event) {
+  const { data: eventData } = await supabase
+    .from('events')
+    .select(`
+      *,
+      cities!city_id (
+        name,
+        slug
+      ),
+      profiles:organizer_id (
+        name,
+        avatar_url
+      )
+    `)
+    .eq('id', id)
+    .single();
+
+  if (!eventData) {
     notFound();
   }
 
-  const eventDate = new Date(event.date);
+  // Transform Supabase data to Event interface
+  const event: Event = {
+    id: eventData.id,
+    title: eventData.title,
+    titleEn: eventData.title_en,
+    description: eventData.description,
+    descriptionEn: eventData.description_en,
+    type: eventData.type as 'meetup' | 'workshop' | 'networking',
+    city: eventData.cities?.name || '',
+    citySlug: eventData.cities?.slug || '',
+    location: eventData.location || { name: '', address: '' },
+    date: new Date(eventData.date),
+    startTime: eventData.start_time,
+    endTime: eventData.end_time,
+    capacity: eventData.capacity,
+    registered: eventData.registered || 0,
+    organizer: {
+      id: eventData.organizer_id || '',
+      name: eventData.profiles?.name || '익명',
+      avatar: eventData.profiles?.avatar_url || '/avatars/default.jpg',
+    },
+    image: eventData.image_url || '',
+  };
+
+  const eventDate = event.date;
   const formattedDate = eventDate.toLocaleDateString('ko-KR', {
     year: 'numeric',
     month: 'long',
@@ -53,12 +103,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
     weekday: 'long',
   });
 
-  const formattedTime = eventDate.toLocaleTimeString('ko-KR', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-
-  const spotsLeft = event.maxParticipants - event.participants;
+  const spotsLeft = event.capacity - event.registered;
   const isFull = spotsLeft <= 0;
 
   return (
@@ -120,12 +165,15 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
               </div>
               <div className="p-6">
                 <div className="flex items-center gap-4">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 text-2xl font-bold text-white">
-                    {event.organizer[0]}
-                  </div>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={event.organizer.avatar}
+                    alt={event.organizer.name}
+                    className="h-16 w-16 rounded-full object-cover"
+                  />
                   <div>
                     <p className="text-lg font-semibold text-gray-900">
-                      {event.organizer}
+                      {event.organizer.name}
                     </p>
                     <p className="text-sm text-gray-600">이벤트 주최자</p>
                   </div>
@@ -144,17 +192,18 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                   <div>
                     <p className="mb-1 text-sm text-gray-600">날짜</p>
                     <p className="font-semibold text-gray-900">{formattedDate}</p>
-                    <p className="text-sm text-gray-700">{formattedTime}</p>
+                    <p className="text-sm text-gray-700">{event.startTime} - {event.endTime}</p>
                   </div>
                   <div className="border-t border-gray-200 pt-4">
                     <p className="mb-1 text-sm text-gray-600">장소</p>
-                    <p className="font-semibold text-gray-900">{event.location}</p>
-                    <p className="text-sm text-gray-700">{event.cityName}</p>
+                    <p className="font-semibold text-gray-900">{event.location.name}</p>
+                    <p className="text-sm text-gray-700">{event.location.address}</p>
+                    <p className="text-sm text-gray-600 mt-1">{event.city}</p>
                   </div>
                   <div className="border-t border-gray-200 pt-4">
                     <p className="mb-1 text-sm text-gray-600">참가자</p>
                     <p className="font-semibold text-gray-900">
-                      {event.participants}/{event.maxParticipants}명
+                      {event.registered}/{event.capacity}명
                     </p>
                     {!isFull && (
                       <p className="text-sm text-green-600">

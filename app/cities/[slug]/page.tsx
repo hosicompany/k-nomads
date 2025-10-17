@@ -1,13 +1,17 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { cities, reviews as initialReviews } from '@/lib/data';
+import { createClient } from '@/lib/supabase/server';
+import { City } from '@/types';
 import RatingBar from '@/components/city/RatingBar';
 import CityDetailClient from '@/components/city/CityDetailClient';
 import CityReviewSection from '@/components/city/CityReviewSection';
 
 export async function generateStaticParams() {
-  return cities.map((city) => ({
+  const supabase = await createClient();
+  const { data: cities } = await supabase.from('cities').select('slug');
+
+  return (cities || []).map((city) => ({
     slug: city.slug,
   }));
 }
@@ -20,7 +24,13 @@ export async function generateMetadata({
   params,
 }: CityDetailPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const city = cities.find((c) => c.slug === slug);
+  const supabase = await createClient();
+
+  const { data: city } = await supabase
+    .from('cities')
+    .select('*')
+    .eq('slug', slug)
+    .single();
 
   if (!city) {
     return {
@@ -29,11 +39,11 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${city.name} (${city.nameEn})`,
-    description: `${city.name}의 디지털 노마드 생활 정보. 평점 ${city.rating.toFixed(1)}/5.0, 생활비 ${city.costOfLiving.min}-${city.costOfLiving.max}만원/월, 인터넷 속도 ${city.internetSpeed}Mbps. ${city.activeNomads}명의 노마드가 현재 거주중입니다.`,
+    title: `${city.name} (${city.name_en})`,
+    description: `${city.name}의 디지털 노마드 생활 정보. 평점 ${Number(city.rating).toFixed(1)}/5.0, 생활비 ${city.cost_min}-${city.cost_max}만원/월, 인터넷 속도 ${city.internet_speed}Mbps. ${city.active_nomads}명의 노마드가 현재 거주중입니다.`,
     openGraph: {
       title: `${city.name} - K-NOMADS`,
-      description: `${city.name}에서 디지털 노마드 생활을 시작하세요. 평점 ${city.rating.toFixed(1)}/5.0`,
+      description: `${city.name}에서 디지털 노마드 생활을 시작하세요. 평점 ${Number(city.rating).toFixed(1)}/5.0`,
       images: ['/og-image.jpg'],
     },
   };
@@ -41,11 +51,38 @@ export async function generateMetadata({
 
 export default async function CityDetailPage({ params }: CityDetailPageProps) {
   const { slug } = await params;
-  const city = cities.find((c) => c.slug === slug);
+  const supabase = await createClient();
 
-  if (!city) {
+  const { data: cityData } = await supabase
+    .from('cities')
+    .select('*')
+    .eq('slug', slug)
+    .single();
+
+  if (!cityData) {
     notFound();
   }
+
+  // Transform Supabase data to City interface
+  const city: City = {
+    id: cityData.id,
+    rank: 0, // Will be calculated
+    name: cityData.name,
+    nameEn: cityData.name_en,
+    slug: cityData.slug,
+    image: cityData.image_url || '',
+    rating: Number(cityData.rating) || 0,
+    lovePercentage: cityData.love_percentage || 0,
+    activeNomads: cityData.active_nomads || 0,
+    ratings: cityData.ratings || { cafe: 0, housing: 0, transportation: 0, food: 0, nature: 0 },
+    costOfLiving: {
+      min: cityData.cost_min || 0,
+      max: cityData.cost_max || 0,
+    },
+    internetSpeed: cityData.internet_speed || 0,
+    cafes24h: cityData.cafes_24h || 0,
+    weather: cityData.weather || { temp: 0, condition: '' },
+  };
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -69,9 +106,6 @@ export default async function CityDetailPage({ params }: CityDetailPageProps) {
           <div className="mt-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
             <div>
               <div className="mb-2 flex items-center gap-3">
-                <span className="rounded-full bg-blue-600 px-4 py-1 text-sm font-bold text-white">
-                  #{city.rank}
-                </span>
                 <h1 className="text-5xl font-bold text-gray-900">
                   {city.name}
                 </h1>
@@ -144,7 +178,7 @@ export default async function CityDetailPage({ params }: CityDetailPageProps) {
 
             <CityReviewSection
               city={city}
-              initialReviews={initialReviews.filter((r) => r.cityId === city.id)}
+              initialReviews={[]}
             />
           </div>
 
