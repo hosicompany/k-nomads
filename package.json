@@ -1,0 +1,13 @@
+{
+  "name": "k-nomad-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "cd k-nomads && npm install && npm run build",
+    "dev": "cd k-nomads && npm run dev",
+    "start": "cd k-nomads && npm run start"
+  },
+  "workspaces": [
+    "k-nomads"
+  ]
+}
